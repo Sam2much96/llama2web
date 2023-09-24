@@ -1,85 +1,36 @@
-
-
-"""Example FastAPI server for llama.cpp.
-
-To run this example:
-
-```bash
-pip install fastapi uvicorn sse-starlette pydantic-settings
-export MODEL=../models/7B/...
-```
-
-Then run:
-```
-uvicorn llama_cpp.server.app:app --reload
-```
-
-or
-
-```
-python3 -m llama_cpp.server
-```
-
-Then visit http://localhost:8000/docs to see the interactive API docs.
-
-"""
 import os
-import argparse
-
+import replicate
 import uvicorn
-
-from app import create_app, Settings
-
-#aws event handler
+from fastapi import FastAPI
 from mangum import Mangum
+import time
 
-# Model Database
-import boto3
-
-
+os.environ ['REPLICATE_API_TOKEN']='r8_ecfB3bNIHjQfu7NisJxCWqQjJXpUAnc2Eyt5x'
 
 
-if __name__ == "__main__":
+app = FastAPI()
+handler = Mangum(app)
 
 
-	# Main Model Logic
+@app.get('/v1')
+def read_root()-> dict:
+	_output : str= "" 
+	output = replicate.run(
+	    "meta/llama-2-7b-chat:8e6975e5ed6174911a6ff3d60540dfd4844201974602551e10e9e87ab143d81e",
+	    input={"prompt": "who is Naruto Uzumaki?"}
+	)
+	time.sleep(4)
+	for item in output:
+		_output += item
 
-    parser = argparse.ArgumentParser()
+	return {'output': _output}
 
-    for name, field in Settings.model_fields.items():
-        description = field.description
-        if field.default is not None and description is not None:
-            description += f" (default: {field.default})"
-        parser.add_argument(
-            f"--{name}",
-            dest=name,
-            type=field.annotation if field.annotation is not None else str,
-            help=description,
-        )
+# Lambda function handler
+def lambda_handler(event, context):
+	# Invoke Mangum with event and context
+	return handler(event, context)
 
-
-
-    args = parser.parse_args()
-    args.model = 'ggml-model-q4_0.gguf'
-    args.n_ctx = 128
-    args.cache = True
-
-    # Get the Host and the Port 
-
-    print(args)
+if __name__ == '__main__':
+	uvicorn.run(app, host='0.0.0.0', port=8080)
 
 
-    settings = Settings(**{k: v for k, v in vars(args).items() if v is not None})
-    
-
-
-    # Debug Settings
-    print(settings)
-
-    app = create_app(settings=settings)
-        
-    handler = Mangum(app)
-
-    uvicorn.run(
-        app, host=os.getenv("HOST", settings.host), port=int(os.getenv("PORT", settings.port))
-    )
