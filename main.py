@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from mangum import Mangum
 import time
 import json
-os.environ ['REPLICATE_API_TOKEN']='r8_ecfB3bNIHjQfu7NisJxCWqQjJXpUAnc2Eyt5x'
+os.environ ['REPLICATE_API_TOKEN']='r8_'
 
 
 app = FastAPI(title="🦙 llama.cpp Python API",version="0.0.1",)
