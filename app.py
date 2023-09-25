@@ -11,7 +11,7 @@ app = FastAPI()
 handler = Mangum(app)
 
 
-@app.get('/')
+@app.get('/v1')
 def read_root():
 
 	output = replicate.run(
@@ -26,6 +26,8 @@ def read_root():
 		output += item
 
 	return {'output': output}
+
+
 
 if __name__ == '__main__':
 	uvicorn.run(app, host='ec2-51-20-64-167.eu-north-1.compute.amazonaws.com', port=8080)
